@@ -1077,9 +1077,9 @@ class Backtest:
 
         [FIFO]: https://www.investopedia.com/terms/n/nfa-compliance-rule-2-43b.asp
         """
-
-        if not (isinstance(strategy, type) and issubclass(strategy, Strategy)):
-            raise TypeError('`strategy` must be a Strategy sub-type')
+        
+        # if not (isinstance(strategy, type) and issubclass(strategy, Strategy)):
+        #     raise TypeError('`strategy` must be a Strategy sub-type')
         if not isinstance(data, pd.DataFrame):
             raise TypeError("`data` must be a pandas.DataFrame with columns")
         if not isinstance(commission, Number):
@@ -1133,6 +1133,7 @@ class Backtest:
         )
         self._strategy = strategy
         self._results: Optional[pd.Series] = None
+        self.equity = None
 
     def run(self, **kwargs) -> pd.Series:
         """
@@ -1231,10 +1232,10 @@ class Backtest:
             # for future `indicator._opts['data'].index` calls to work
             data._set_length(len(self._data))
 
-            equity = pd.Series(broker._equity).bfill().fillna(broker._cash).values
+            self.equity = pd.Series(broker._equity).bfill().fillna(broker._cash).values
             self._results = compute_stats(
                 trades=broker.closed_trades,
-                equity=equity,
+                equity=self.equity,
                 ohlc_data=self._data,
                 risk_free_rate=0.0,
                 strategy_instance=strategy,
