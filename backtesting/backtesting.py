@@ -740,6 +740,8 @@ class _Broker:
         sl = sl and float(sl)
         tp = tp and float(tp)
 
+        # print(f"New order: size={size}, limit={limit}, stop={stop}, sl={sl}, tp={tp}, tag={tag}")
+
         is_long = size > 0
         adjusted_price = self._adjusted_price(size)
 
@@ -818,6 +820,7 @@ class _Broker:
         prev_close = data.Close[-2]
         reprocess_orders = False
 
+        # print('Processing orders', list(self.orders))
         # Process orders
         for order in list(self.orders):  # type: Order
 
@@ -895,10 +898,13 @@ class _Broker:
             # precompute true size in units, accounting for margin and spread/commissions
             size = order.size
             if -1 < size < 1:
+                # print(size, self.margin_available, self._leverage, adjusted_price, order.size, price)
                 size = copysign(int((self.margin_available * self._leverage * abs(size))
                                     // adjusted_price), size)
+                # print(size)
                 # Not enough cash/margin even for a single unit
                 if not size:
+                    # print('removing order - here')
                     self.orders.remove(order)
                     continue
             assert size == round(size)
@@ -929,6 +935,8 @@ class _Broker:
 
             # If we don't have enough liquidity to cover for the order, cancel it
             if abs(need_size) * adjusted_price > self.margin_available * self._leverage:
+                # print(abs(need_size), adjusted_price, self.margin_available, self._leverage)
+                # print('in not enough liquidity condition, removing!')
                 self.orders.remove(order)
                 continue
 
@@ -1241,7 +1249,7 @@ class Backtest:
                 strategy_instance=strategy,
             )
 
-        return self._results
+        return self._results, strategy
 
     def optimize(self, *,
                  maximize: Union[str, Callable[[pd.Series], float]] = 'SQN',
